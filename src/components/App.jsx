@@ -5,7 +5,7 @@ import { ImageGallery } from './ImageGallery';
 import { Loader } from './Loader';
 import { Searchbar } from './Searchbar';
 import { getImg } from 'services/fetchImg';
-import { ContainerStyled, ErrorMessageStyled } from './App.styled';
+import { ContainerStyled } from './App.styled';
 import { ButtonUp } from './ButtonUp';
 import { Notify } from 'notiflix';
 
@@ -15,42 +15,28 @@ export const App = () => {
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!searchValue.length) return;
+    if (!searchValue) return;
     setIsLoading(true);
-    getImg(searchValue)
-      .then(data => {
-        if (data.totalHits < 1) {
+    getImg(searchValue, page)
+      .then(({ totalHits, hits }) => {
+        console.log(totalHits);
+        console.log(hits);
+        if (totalHits < 1) {
           throw new Error(
             'Sorry, there are no images matching your search query. Please try again.'
           );
         }
-        scroll.scrollToTop();
-        setPage(1);
-        setTotalPage(Math.ceil(data.totalHits / 12));
-        setImg(data.hits);
-        setError(null);
-        Notify.success(`Hooray! We found ${data.totalHits} images.`);
-      })
-      .catch(({ message }) => {
-        img.length ? Notify.failure(message) : setError(message);
-      })
-      .finally(() => setIsLoading(false));
-  }, [searchValue]);
-
-  useEffect(() => {
-    if (page === 1) return;
-    setIsLoading(true);
-    getImg(searchValue, page)
-      .then(data => {
-        setImg(prevImg => [...prevImg, ...data.hits]);
+        // if (page !== 1) scroll.scrollToTop();
         if (page !== 1) smoothScroll(getNextPageHeight());
+        setTotalPage(Math.ceil(totalHits / 12));
+        setImg(prevImg => (page === 1 ? hits : [...prevImg, ...hits]));
+        Notify.success(`Hooray! We found ${totalHits} images.`);
       })
       .catch(({ message }) => Notify.failure(message))
       .finally(() => setIsLoading(false));
-  }, [page]);
+  }, [searchValue, page]);
 
   function onChangePage() {
     setPage(prevPage => prevPage + 1);
@@ -66,13 +52,15 @@ export const App = () => {
   }
 
   function onSubmit(value) {
+    setImg([]);
     setSearchValue(value);
+    setPage(1);
+    setTotalPage(0);
   }
 
   return (
     <ContainerStyled>
       <Searchbar onSubmit={onSubmit} currentPage={{ page, totalPage }} />
-      {error && <ErrorMessageStyled>{error}</ErrorMessageStyled>}
       <ImageGallery img={img} />
       {isLoading && <Loader />}
       {totalPage > 1 && page < totalPage && <Button onClick={onChangePage} />}
