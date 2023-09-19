@@ -28,11 +28,10 @@ export const App = () => {
             'Sorry, there are no images matching your search query. Please try again.'
           );
         }
-        // if (page !== 1) scroll.scrollToTop();
         if (page !== 1) smoothScroll(getNextPageHeight());
         setTotalPage(Math.ceil(totalHits / 12));
         setImg(prevImg => (page === 1 ? hits : [...prevImg, ...hits]));
-        Notify.success(`Hooray! We found ${totalHits} images.`);
+        if (page === 1) Notify.success(`Hooray! We found ${totalHits} images.`);
       })
       .catch(({ message }) => Notify.failure(message))
       .finally(() => setIsLoading(false));
