@@ -21,8 +21,6 @@ export const App = () => {
     setIsLoading(true);
     getImg(searchValue, page)
       .then(({ totalHits, hits }) => {
-        console.log(totalHits);
-        console.log(hits);
         if (totalHits < 1) {
           throw new Error(
             'Sorry, there are no images matching your search query. Please try again.'
